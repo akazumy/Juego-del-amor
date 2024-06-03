@@ -1,35 +1,137 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>declaracion</title>
     <link rel="stylesheet" href="estilos.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Disparando con Sandreke</title>
 </head>
-
 <body>
-    <div class="contenedor">
-        <p>¿QUIERES SER MI NOVIA?</p>
+<div class="contenedor">    <canvas id="gameCanvas" width="700" height="775"></canvas></div>
 
-        <div>
-            <img src="declaracion.jpg" width="200">
-        </div>
+    <script>
+        var canvas = document.getElementById("gameCanvas");
+        var ctx = canvas.getContext("2d");
 
+        var player_image = new Image();
+        player_image.src = "imgs/messi.png";
 
-        <button id="yesBtn">SI</button>
-        <button id="noBtn">NO</button>
+        var bullet_image = new Image();
+        bullet_image.src = "imgs/corazón.png";
 
-    </div>
-    <div class="video">
-        <video id="mivideo" width="640" height="360" autoplay muted loop>
-            <source src="video.mp4" type="video/mp4">
+        var enemy_image = new Image();
+        enemy_image.src = "imgs/antonela.png";
 
-        </video>
-    </div>
-    <script src="index.js"></script>
+        var background_image = new Image();
+        background_image.src = "imgs/fondo_amor.jpg";
 
+        var player = {
+            x: canvas.width / 2 - 30,
+            y: canvas.height - 70,
+            width: 60,
+            height: 60,
+            speed: 5, // velocidad de movimiento del jugador
+            dx: 0 // cambio en la posición del jugador en el eje x
+        };
+
+        var bullets = [];
+        var enemies = [];
+        var enemySpeed = 3;
+
+        document.addEventListener("keydown", function(event) {
+            if (event.key === "ArrowLeft") {
+                player.dx = -player.speed;
+            } else if (event.key === "ArrowRight") {
+                player.dx = player.speed;
+            } else if (event.key === " ") {
+                shoot();
+            }
+        });
+
+        document.addEventListener("keyup", function(event) {
+            if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
+                player.dx = 0;
+            }
+        });
+
+        function shoot() {
+            var bullet = {
+                x: player.x + player.width / 2 - 25 / 2,
+                y: player.y,
+                width: 50,
+                height: 50,
+                speed: 10
+            };
+            bullets.push(bullet);
+        }
+
+        function generateEnemy() {
+            var enemy = {
+                x: Math.random() * (canvas.width - 60),
+                y: 0,
+                width: 60,
+                height: 60
+            };
+            enemies.push(enemy);
+        }
+
+        function gameLoop() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height); // limpiar el canvas
+
+            // Dibujar fondo
+            ctx.drawImage(background_image, 0, 0, canvas.width, canvas.height);
+
+            // Actualizar posición del jugador
+            player.x += player.dx;
+
+            // Dibujar al jugador
+            ctx.drawImage(player_image, player.x, player.y, player.width, player.height);
+
+            // Actualizar posición de las balas
+            bullets.forEach(function(bullet) {
+                bullet.y -= bullet.speed;
+                ctx.drawImage(bullet_image, bullet.x, bullet.y, bullet.width, bullet.height);
+            });
+
+            // Generar enemigos aleatorios
+            if (Math.random() < 0.02) {
+                generateEnemy();
+            }
+
+            // Actualizar posición de los enemigos
+            enemies.forEach(function(enemy) {
+                enemy.y += enemySpeed;
+                ctx.drawImage(enemy_image, enemy.x, enemy.y, enemy.width, enemy.height);
+            });
+
+            // Colisiones entre balas y enemigos
+            bullets.forEach(function(bullet, bulletIndex) {
+                enemies.forEach(function(enemy, enemyIndex) {
+                    if (
+                        bullet.x < enemy.x + enemy.width &&
+                        bullet.x + bullet.width > enemy.x &&
+                        bullet.y < enemy.y + enemy.height &&
+                        bullet.y + bullet.height > enemy.y
+                    ) {
+                        bullets.splice(bulletIndex, 1);
+                        enemies.splice(enemyIndex, 1);
+                    }
+                });
+            });
+
+            // Solicitar el próximo frame de animación
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Comenzar el bucle del juego después de que todas las imágenes estén cargadas
+        Promise.all([
+            new Promise(resolve => player_image.onload = resolve),
+            new Promise(resolve => bullet_image.onload = resolve),
+            new Promise(resolve => enemy_image.onload = resolve),
+            new Promise(resolve => background_image.onload = resolve)
+        ]).then(() => {
+            gameLoop(); // Comenzar el bucle del juego después de que todas las imágenes estén cargadas
+        });
+    </script>
 </body>
-
 </html>
